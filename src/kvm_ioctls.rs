@@ -94,6 +94,11 @@ ioctl_ior_nr!(KVM_GET_PIT2, KVMIO, 0x9f, kvm_pit_state2);
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 ioctl_iow_nr!(KVM_SET_PIT2, KVMIO, 0xa0, kvm_pit_state2);
 
+ioctl_iow_nr!(KVM_XEN_HVM_CONFIG, KVMIO, 0x7a, kvm_xen_hvm_config);
+
+ioctl_iowr_nr!(KVM_XEN_HVM_GET_ATTR, KVMIO, 0xc8, kvm_xen_hvm_attr);
+ioctl_iow_nr!(KVM_XEN_HVM_SET_ATTR, KVMIO, 0xc9, kvm_xen_hvm_attr);
+
 // Ioctls for VCPU fds.
 
 ioctl_io_nr!(KVM_RUN, KVMIO, 0x80);
@@ -219,6 +224,8 @@ ioctl_iowr_nr!(KVM_GET_REG_LIST, KVMIO, 0xb0, kvm_reg_list);
 
 /* Available with KVM_CAP_SET_GUEST_DEBUG */
 ioctl_iow_nr!(KVM_SET_GUEST_DEBUG, KVMIO, 0x9b, kvm_guest_debug);
+
+ioctl_iowr_nr!(KVM_TRANSLATE, KVMIO, 0x85, kvm_translation);
 
 // Device ioctls.
 

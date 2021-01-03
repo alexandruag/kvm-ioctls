@@ -1259,6 +1259,34 @@ impl VmFd {
     pub fn check_extension(&self, c: Cap) -> bool {
         self.check_extension_int(c) > 0
     }
+
+    ///
+    pub fn xen_hvm_config(&self, cfg: &kvm_xen_hvm_config) -> Result<()> {
+        let ret = unsafe {
+            // Here we trust the kernel not to read past the end of the kvm_cpuid2 struct.
+            ioctl_with_ref(&self.vm, KVM_XEN_HVM_CONFIG(), cfg)
+        };
+
+        if ret < 0 {
+            Err(errno::Error::last())
+        } else {
+            Ok(())
+        }
+    }
+
+    ///
+    pub fn xen_hvm_set_attr(&self, attr: &kvm_xen_hvm_attr) -> Result<()> {
+        let ret = unsafe {
+            // Here we trust the kernel not to read past the end of the kvm_cpuid2 struct.
+            ioctl_with_ref(&self.vm, KVM_XEN_HVM_SET_ATTR(), attr)
+        };
+
+        if ret < 0 {
+            Err(errno::Error::last())
+        } else {
+            Ok(())
+        }
+    }
 }
 
 /// Helper function to create a new `VmFd`.

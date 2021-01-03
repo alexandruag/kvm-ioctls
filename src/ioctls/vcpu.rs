@@ -92,6 +92,18 @@ pub enum VcpuExit<'a> {
     IoapicEoi(u8 /* vector */),
     /// Corresponds to KVM_EXIT_HYPERV.
     Hyperv,
+    /// Corresponds to KVM_EXIT_XEN.
+    Xen(XenExit<'a>),
+}
+
+///
+#[derive(Debug)]
+pub enum XenExit<'a> {
+    ///
+    Hcall(&'a mut kvm_xen_exit__bindgen_ty_1__bindgen_ty_1),
+    ///
+    // For now this is solely for info reasons.
+    Unsupported(u32),
 }
 
 /// Wrapper over KVM vCPU ioctls.
@@ -1322,6 +1334,18 @@ impl VcpuFd {
                     Ok(VcpuExit::IoapicEoi(eoi.vector))
                 }
                 KVM_EXIT_HYPERV => Ok(VcpuExit::Hyperv),
+                KVM_EXIT_XEN => {
+                    // Safe because ...
+                    let xen = unsafe { &mut run.__bindgen_anon_1.xen };
+
+                    let xen_exit = match xen.type_ {
+                        // Safe because ...
+                        KVM_EXIT_XEN_HCALL => XenExit::Hcall(unsafe { &mut xen.u.hcall }),
+                        x => XenExit::Unsupported(x),
+                    };
+
+                    Ok(VcpuExit::Xen(xen_exit))
+                }
                 r => panic!("unknown kvm exit reason: {}", r),
             }
         } else {
@@ -1333,6 +1357,20 @@ impl VcpuFd {
     pub fn set_kvm_immediate_exit(&self, val: u8) {
         let kvm_run = self.kvm_run_ptr.as_mut_ref();
         kvm_run.immediate_exit = val;
+    }
+
+    /// TODO: Find appropriate signature/interface.
+    pub fn translate(&self, translation: &mut kvm_translation) -> Result<()> {
+        let ret = unsafe {
+            // Here we trust the kernel not to read/write past the end of the translation struct.
+            ioctl_with_mut_ref(self, KVM_TRANSLATE(), translation)
+        };
+
+        if ret < 0 {
+            Err(errno::Error::last())
+        } else {
+            Ok(())
+        }
     }
 }
 
